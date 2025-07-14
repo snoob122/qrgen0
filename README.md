@@ -1,2 +1,12 @@
-# qrgen0
-This is a QR code generator that I managed to built from scratch in just 8 days. It has some features like all version support (1 - 40), 3 Encoding Mode (Numeric, Alphanumeric, Byte) it also has a CLI and Bitmap exporter. Obviously, a lot of the parts in the code are unoptimized that is due to limitations in time and my skill, it was fun though :).
+# qrgen0 - A pure python qr code generator
+
+**qrgen0** is a fully functional, zero-dependency qr code generator written entirely in Python - without a single import. Built from scratch in 8 days, it supports:
+
+- All QR Version (1 - 40)
+- Numeric, Alphanumeric and Byte Encoding
+- A masking optimisation system
+- Bitmap (.bmp) output without Pillow
+- ASCII output for terminal or raw file rendering (stored in .txt file)
+- A not the best but functional CLI 
+- Settings Saved automatically in config (.cfg) file
+
