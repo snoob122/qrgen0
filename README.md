@@ -10,3 +10,7 @@
 - A not the best but functional CLI 
 - Settings Saved automatically in config (.cfg) file
 
+Once you run it, you will be met with the default CLI that I created, if you prefer prompts over CLI you can change using_cli at line 4
+
+It was a miracle that I managed to pull this off considering my coding skill and the difficulty of this, well it was fun atleast.
+- Bean -
