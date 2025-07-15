@@ -1,0 +1,7 @@
+V1.1:
+- Automatically create settings.cfg if not found and write default data to it ( -> Reduce the number of files)
+- Improve automatic saving system
+- Added more configuration settings
+- Small changes regarding the look of the CLI
+- Changing the name of ascii file when written to prevent overriding
+- Fixed some small bugs and improve user experience a little more
