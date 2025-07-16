@@ -12,7 +12,8 @@ V1.0:
 - Settings Saved automatically in config (.cfg) file
 
 V1.1:
-- Automatically create settings.cfg if not found and write default data to it ( -> Reduce the number of files)
+- Automatically create settings.cfg if not found and write default data to it
+- The main file (qrgen0_v1.2.py) is the only file needed to run properly now
 - Improve automatic saving system
 - Added more configuration settings
 - Small changes regarding the look of the CLI
