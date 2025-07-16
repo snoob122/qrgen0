@@ -1,6 +1,21 @@
 #-----------------------------QRGEN0-BY-BEAN------------------------------------------------------------------------------
 # Starting
-print("-----qrgen0_v1.1----- \n- (Version 1 - 40) \n- (Numeric, Alphanumeric, Byte Encoding Mode) \n- Some Extra Features \n ---- Made By Bean ---- \n - Feel Free To Use This Material For Your Purposes -\n\n")
+logo = """  ██       █  ██▓▓  █                        
+█ ████ ████  █ █ █████ ███                    
+███ ██        █  █  █ ██                    
+  ███ █ █ qrgen0  █  ██                      
+█ █   ██    █  █    █████                  
+  ██  █ █  ██ █ █  █                       
+     ██   █ █████ █████   """
+
+print("----- qrgen0_v1.2 -----")
+print(logo)
+print("---- Made By Bean ----")
+
+# A Little Wait System
+for _ in range(10000000):
+    pass
+
 using_cli = True
 
 # ------------------- Functions -----------------------
@@ -469,7 +484,7 @@ def get_block_data(version_num, error_correction_level):
         (40, 'H'): {"num_blocks": 81, "block_sizes": [15] * 20 + [16] * 61, "ecc_per_block": 30}
     }
 
-    return block_structure[(version_num, error_correction_level.upper())]
+    return block_structure[(version_num, error_correction_level)]
 
 # Get Alphanumeric
 def lookup_alphanumeric(char):
@@ -787,7 +802,7 @@ def get_qr_capacity(version_num, error_correction_level, encoding_mode):
     elif encoding_mode == 3:
         encoding_mode = 'byte'
 
-    return qr_capacity_table[int(version_num)][error_correction_level.upper()][encoding_mode]
+    return qr_capacity_table[int(version_num)][error_correction_level][encoding_mode]
 
 # Get Timing Pattern Length
 def get_timing_pattern_length(version):
@@ -820,13 +835,13 @@ def apply_mask(matrix, size, mask_index):
 def apply_format(matrix, size, ecl, mask_index):
 
     # Converting ECL to Bits
-    if ecl.lower() == "l":
+    if ecl == "l":
         ecl = "01"
-    elif ecl.lower() == "m":
+    elif ecl == "m":
         ecl = "00"
-    elif ecl.lower() == "q":
+    elif ecl == "q":
         ecl = "11"
-    elif ecl.lower() == "h":
+    elif ecl == "h":
         ecl = "10"
 
     # Converting Mask Index to Bits
@@ -874,17 +889,17 @@ def apply_version(matrix, size, version_num):
     return matrix
 
 #function for generating a BMP file to display the qr code:
-def bmp_gen(matrix, size, version, ecl, encode_mode, message):
+def bmp_gen(matrix, size, version, ecl, encode_mode, message, quiet_zone_thickness):
     # Setting Up Quiet Zone
     for y in range(size):
-        for _ in range(4):
+        for _ in range(quiet_zone_thickness):
             matrix[y].append(0)
             matrix[y].insert(0, 0)
-    for _ in range(4):
-        matrix.insert(0, [0] * (size+8))
-        matrix.append([0] * (size+8))
+    for _ in range(quiet_zone_thickness):
+        matrix.insert(0, [0] * (size+(quiet_zone_thickness*2)))
+        matrix.append([0] * (size+(quiet_zone_thickness*2)))
 
-    size += 8
+    size += quiet_zone_thickness*2
     # Local Variables
     row_size = size*3
     row_padding = (4-(row_size % 4)) %4
@@ -938,7 +953,7 @@ def bmp_gen(matrix, size, version, ecl, encode_mode, message):
 
 
 # ---- Function Handling QR Generation ----
-def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_image=True, export_ascii=True):
+def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_image=True, export_ascii=True, quiet_zone=4):
 
     # Prompts advanced mode
     if not cli:
@@ -970,8 +985,16 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
     export_file = export_image
     export_ascii = export_ascii
 
+    # If CLI is enabled will not print qr code through terminal
     if cli:
         print_qr_code = False
+
+    # Setting Up Some Variables
+    char_encoding_mode = "a"
+    error_correction_level = "m"
+    input_message = ""
+    version_selection = "a"
+
 
     # Getting Datas If CLI is Enabled
     if cli:
@@ -988,8 +1011,6 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
             "\n[a] Auto \n[1] Numeric\n[2] Alphanumeric\n[3] Byte\n Input(a,1,2,3): ")
     elif not cli and default_settings:
         char_encoding_mode = default_encoding
-    else:
-        char_encoding_mode = "a"
 
     if char_encoding_mode.isdigit():
         if 1 <= int(char_encoding_mode) <= 3:
@@ -1030,13 +1051,13 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
         export_file = default_image
 
     # Prompts For Exporting ASCII
-
     if not default_settings and not cli:
         export_ascii = input("Export ASCII? [True/False]: ")
         if export_ascii.lower() == "true" or export_ascii.lower() == "t" or export_ascii.lower() == "1":
             export_ascii = True
         elif export_ascii.lower() == "false" or export_ascii.lower() == "f" or export_ascii.lower() == "0":
             export_ascii = False
+
     if default_settings and not cli:
         export_ascii = default_ascii
 
@@ -1075,10 +1096,10 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
     elif version_selection.lower() == "a":
         # A while loop for choosing the correct version
         version_selection = 1
-        writable_data = get_qr_capacity(version_selection, error_correction_level, char_encoding_mode)
+        writable_data = get_qr_capacity(version_selection, error_correction_level.upper(), char_encoding_mode)
         while writable_data <= len(input_message):
             version_selection += 1
-            writable_data = get_qr_capacity(version_selection, error_correction_level, char_encoding_mode)
+            writable_data = get_qr_capacity(version_selection, error_correction_level.upper(), char_encoding_mode)
 
             # A timeout in case something goes haywire
             if version_selection > 40:
@@ -1088,7 +1109,7 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
         input("\nInvalid Version")
 
     # Get Block Information
-    block_info = get_block_data(version_selection, error_correction_level)
+    block_info = get_block_data(version_selection, error_correction_level.upper())
     block_number = block_info["num_blocks"]
     block_size = block_info["block_sizes"]
     ecc_per_block = block_info["ecc_per_block"]
@@ -1121,7 +1142,6 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
     # -----Preprocessing Data-----
     # Adding Necessary Indicators
     message_encoded = mode_indicator + char_count_indicator
-    debug = []
 
     # Adding Encoded Text From Input Message Depending On Encoding Mode
     if char_encoding_mode == 1:  # Numeric
@@ -1136,9 +1156,7 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
             else:
                 message_encoded += bin(int(input_message[i]))[2:].zfill(4)
     elif char_encoding_mode == 2:  # Alphanumeric
-        if not (input_message.isalnum() and input_message.isupper()):
-            print(f"Alphanumeric Only Support Upper A-Z, 0-9, Punctuations!!")
-            quit()
+        input_message = input_message.upper()
         for i in range(0, len(input_message), 2):
             if i + 1 < len(input_message):
                 message_encoded += bin(
@@ -1390,7 +1408,7 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
     for i in range(len(qr_matrix_clones)):
         qr_matrix_clones[i] = apply_mask(qr_matrix_clones[i], qr_size, i)
 
-        qr_matrix_clones[i] = apply_format(qr_matrix_clones[i], qr_size, error_correction_level, i)
+        qr_matrix_clones[i] = apply_format(qr_matrix_clones[i], qr_size, error_correction_level.lower(), i)
         if version_selection >= 7:
             qr_matrix_clones[i] = apply_version(qr_matrix_clones[i], qr_size, version_selection)
 
@@ -1436,7 +1454,6 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
     ]
 
     # Get Encode Text
-    char_encoding_text = ""
     if char_encoding_mode == 1:
         char_encoding_text = "Numeric"
     elif char_encoding_mode == 2:
@@ -1454,7 +1471,7 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
     # Export A BMP Image If export_file is True
     if export_file:
         bmp_gen(qr_result, qr_size, version_selection, error_correction_level.upper(), char_encoding_text,
-                input_message)
+                input_message, quiet_zone_thickness)
 
     if print_qr_code:
         # For Aesthetic Purposes
@@ -1474,7 +1491,7 @@ def generate_QR(text="", cli=False, ecl="", encode_mode=0, version=0, export_ima
 
         with open (filename, "w") as f:
             f.write("QR 1s and 0s Version\n")
-            f.write(f"Message: {input_message}\nVersion: {version_selection}\nEncoding Mode: {char_encoding_text}\nError Correction Level: {ecl_text}\nMask: {penalty_list.index(min(penalty_list))}\n")
+            f.write(f"Message: {input_message}\nVersion: {version_selection}\nEncoding Mode: {char_encoding_text}\nError Correction Level: {ecl_text}\nMask: {penalty_list.index(min(penalty_list))}\n\n")
             for _ in qr_result:
                 f.write((str(_).replace(", ", " "))[1:-1]+"\n")
         f.close()
@@ -1497,13 +1514,16 @@ in_gen = False
 in_gen_confirm = False
 in_export_ascii = False
 in_export_image = False
+in_quiet_zone_adjust = False
+in_reset_settings = False
+in_gen_option = False
+in_gen_from_text = False
+in_gen_from_text_confirm = False
 
-# Exporting
-export_ascii_file = True
-export_image = True
-
-# Initialising Message
+# Initialising Variables
 cur_message = ""
+status = ""
+cur_file_path = ""
 
 loaded_data = []
 
@@ -1515,16 +1535,18 @@ try:
 except FileNotFoundError:
     # Create A New File, Set It To Default Values And Load Default Data
     with open('settings.cfg', "x") as f:
-        f.write("version = Auto\nencoding_mode = Auto\nerror correction level = Medium")
+        f.write("version = Auto\nencoding_mode = Auto\nerror correction level = Medium\nexport-image = True\nexport-ascii = True\nquiet-zone-thickness = 4")
 
         loaded_data.append("Auto")
         loaded_data.append("Auto")
         loaded_data.append("Medium")
         loaded_data.append("True")
         loaded_data.append("False")
+        loaded_data.append("4")
+
 data_failed = False
 # Check For Error In loaded_data
-if len(loaded_data) != 5:
+if len(loaded_data) != 6:
    data_failed = True
 else:
     if loaded_data[0].isdigit():
@@ -1545,18 +1567,24 @@ else:
     if loaded_data[4] != "True" and loaded_data[4] != "False":
         data_failed = True
 
+    if loaded_data[5].isdigit():
+        if not 0 <= int(loaded_data[5]) <= 20:
+            data_failed = True
+# Loaded data is loading data has not failed else use default values
 if data_failed:
     cur_version = "Auto"
     cur_encoding_mode = "Auto"
     cur_ecl = "Medium"
     export_ascii_file = "False"
     export_image = "True"
+    quiet_zone_thickness = 4
 else:
     cur_version = int(loaded_data[0]) if loaded_data[0].isdigit() else loaded_data[0]
     cur_encoding_mode = loaded_data[1]
     cur_ecl = loaded_data[2]
     export_image = True if loaded_data[3] == "True" else False
     export_ascii_file = True if loaded_data[4] == "True" else False
+    quiet_zone_thickness = int(loaded_data[5])
 # Check If Cli Is Enabled Else Just Generate Without A Proper CLI
 # There will be prompts to fill in the necessary data if CLI is not enabled
 if cli_enabled:
@@ -1566,64 +1594,88 @@ if cli_enabled:
         with open("settings.cfg", "w") as f:
             f.write(f"version = {cur_version}\n")
             f.write(f"encoding_mode = {cur_encoding_mode}\n")
-            f.write(f"error correction level = {cur_ecl}\n")
-            f.write(f"export image = {export_image}\n")
-            f.write(f"export ascii = {export_ascii_file}")
+            f.write(f"error-correction-level = {cur_ecl}\n")
+            f.write(f"export-image = {export_image}\n")
+            f.write(f"export-ascii = {export_ascii_file}\n")
+            f.write(f"quiet-zone-thickness = {quiet_zone_thickness}")
         f.close()
 
+        # Displaying CLI
         if main_menu:
-            print("\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n")
             print("====================================\n"
-                  "|           qrgen0_v1.1            |\n"
+                  "|           qrgen0_v1.2            |\n"
                   "|------------Main-Menu-------------|\n"
                   "|[1]. Encode New Qr                |\n"
                   "|[2]. Settings                     |\n"
-                  "|[3]. Exit                         |\n"
+                  "|[3]. Reset Settings               |\n"
+                  "|[e]. Exit                         |\n"
                   "============MADE-BY-BEAN============")
+        elif in_gen_option:
+            print("\n\n\n\n\n\n\n\n\n")
+            print("===========================================\n"
+                  "|             qrgen0_v1.2                 |\n"
+                  "|---------Generate-QR-From-File-----------|\n"
+                  "|[1]. Type Message                        |\n"
+                  "|[2]. From Text File                      |\n"
+                  "|-----------------------------------------|\n"
+                  "|[e]. Exit                                |\n"
+                  f"|-----------------------------------------|\n"
+                  f"|Status:{status}{" "*(34 - len(status))}|\n"
+                  "============MADE-BY-BEAN===================")
         elif in_setting:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("===============================================\n"
-                  "|                qrgen0_v1.1                  |\n"
+                  "|                qrgen0_v1.2                  |\n"
                   "|------------------Settings-------------------|\n"
                   f"|[1]. Version : {cur_version}{" "*(30-len(str(cur_version)))}|\n"
                   f"|[2]. Encoding Mode: {cur_encoding_mode}{" "*(25-len(str(cur_encoding_mode)))}|\n"
                   f"|[3]. Error Correction Level: {cur_ecl}{" "*(16-len(str(cur_ecl)))}|\n"
+                  f"|[4]. Quiet Zone Thickness: {quiet_zone_thickness}{" "*(18-len(str(quiet_zone_thickness)))}|\n"
                   f"|---------------------------------------------|\n"
-                  f"|[4]. Export QR Image: {export_image}{" "*(23-len(str(export_image)))}|\n"
-                  f"|[5]. Export QR Ascii: {export_ascii_file}{" "*(23-len(str(export_ascii_file)))}|\n"
+                  f"|[5]. Export QR Image: {export_image}{" "*(23-len(str(export_image)))}|\n"
+                  f"|[6]. Export QR Ascii: {export_ascii_file}{" "*(23-len(str(export_ascii_file)))}|\n"
                   f"|---------------------------------------------|\n"
-                  f"|[6]. Back                                    |\n"
+                  f"|[e]. Back                                    |\n"
+                  f"|---------------------------------------------|\n"
+                  f"|Status:{status}{" "*(38 - len(status))}|\n"
                   "==================MADE-BY-BEAN=================")
         elif in_version:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("================================================\n"
-                  "|                qrgen0_v1.1                   |\n"
+                  "|                qrgen0_v1.2                   |\n"
                   "|------------------Settings------------------- |\n"
                   f"|Current Version : {cur_version}{" " * (28 - len(str(cur_version)))}|\n"
                   f"| (a for Auto) (1 - 40 for Manual) (e for exit)|\n"
+                  f"|----------------------------------------------|\n"
+                  f"|Status:{status}{" "*(39 - len(status))}|\n"
                   "==================MADE-BY-BEAN==================")
         elif in_em:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("================================================\n"
-                  "|                qrgen0_v1.1                   |\n"
+                  "|                qrgen0_v1.2                   |\n"
                   "|------------------Settings------------------- |\n"
                   f"|Current Encoding Mode : {cur_encoding_mode}{" " * (22 - len(str(cur_encoding_mode)))}|\n"
                   f"| (a for Auto) (e for exit) (1 for Numeric)    |\n"
                   f"| (2 for Alphanumeric) (3 for Byte)            |\n"
+                  f"|----------------------------------------------|\n"
+                  f"|Status:{status}{" "*(39 - len(status))}|\n"
                   "=================MADE-BY-BEAN===================")
         elif in_ecl:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("============================================================\n"
-                  "|                        qrgen0_v1.1                       |\n"
+                  "|                        qrgen0_v1.2                       |\n"
                   "|-------------------------Settings-------------------------|\n"
                   f"|Current Error Correction Level : {cur_ecl}{" " * (25 - len(str(cur_ecl)))}|\n"
                   f"| (e for exit) (1 for Low ~7%) (2 For Medium ~15%)         |\n"
                   f"| (3 for Quartile ~25%) (4 for High ~30%)                  |\n"
+                  f"|----------------------------------------------------------|\n"
+                  f"|Status:{status}{" "*(51 - len(status))}|\n"
                   "========================MADE-BY-BEAN========================")
         elif in_gen:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("=============================================================\n"
-                  "|                      qrgen0_v1.1                          |\n"
+                  "|                      qrgen0_v1.2                          |\n"
                   "|---------------------Generating-QR-------------------------|\n"
                   f"|QR Message :                                               |\n"
                   f"|-----------------------------------------------------------|\n"
@@ -1635,9 +1687,9 @@ if cli_enabled:
                   f"|[-]. Export QR Ascii: {export_ascii_file}{" "*(37-len(str(export_ascii_file)))}|\n"
                   "======================MADE-BY-BEAN===========================")
         elif in_gen_confirm:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("=============================================================\n"
-                  "|                      qrgen0_v1.1                          |\n"
+                  "|                      qrgen0_v1.2                          |\n"
                   "|---------------------Generating-QR-------------------------|\n"
                   f"|QR Message : {cur_message}{" " * (46 - len(cur_message))}|\n"
                   f"|-----------------------------------------------------------|\n"
@@ -1648,22 +1700,82 @@ if cli_enabled:
                   f"|[-]. Export QR Image: {export_image}{" " * (37 - len(str(export_image)))}|\n"
                   f"|[-]. Export QR Ascii: {export_ascii_file}{" " * (37 - len(str(export_ascii_file)))}|\n"
                   "======================MADE-BY-BEAN===========================")
+        elif in_gen_from_text:
+            print("\n\n\n\n\n\n\n\n\n\n\n")
+            print("=============================================================\n"
+                  "|                      qrgen0_v1.2                          |\n"
+                  "|-----------------Generating-QR-From-File-------------------|\n"
+                  f"|File Path :                                                |\n"
+                  f"|-----------------------------------------------------------|\n"
+                  f"|[-]. Version : {cur_version}{" "*(44-len(str(cur_version)))}|\n"
+                  f"|[-]. Encoding Mode: {cur_encoding_mode}{" "*(39-len(str(cur_encoding_mode)))}|\n"
+                  f"|[-]. Error Correction Level: {cur_ecl}{" "*(30-len(str(cur_ecl)))}|\n"
+                  f"|-----------------------------------------------------------|\n"
+                  f"|[-]. Export QR Image: {export_image}{" "*(37-len(str(export_image)))}|\n"
+                  f"|[-]. Export QR Ascii: {export_ascii_file}{" "*(37-len(str(export_ascii_file)))}|\n"
+                  "======================MADE-BY-BEAN===========================")
+        elif in_gen_from_text_confirm:
+            print("\n\n\n\n\n\n\n\n\n\n\n")
+            print("================================================================\n"
+                  "|                      qrgen0_v1.2                          |\n"
+                  "|-----------------Generating-QR-From-File----------------------|\n"
+                  f"|File Path : {cur_file_path}{" " * (50 - len(cur_file_path))}|\n"
+                  f"|--------------------------------------------------------------|\n"
+                  f"|[-]. Version : {cur_version}{" " * (47 - len(str(cur_version)))}|\n"
+                  f"|[-]. Encoding Mode: {cur_encoding_mode}{" " * (42 - len(str(cur_encoding_mode)))}|\n"
+                  f"|[-]. Error Correction Level: {cur_ecl}{" " * (33 - len(str(cur_ecl)))}|\n"
+                  f"|--------------------------------------------------------------|\n"
+                  f"|[-]. Export QR Image: {export_image}{" " * (40 - len(str(export_image)))}|\n"
+                  f"|[-]. Export QR Ascii: {export_ascii_file}{" " * (40 - len(str(export_ascii_file)))}|\n"
+                  "======================MADE-BY-BEAN==============================")
         elif in_export_image:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("==============================================================\n"
-                  "|                        qrgen0_v1.1                         |\n"
+                  "|                        qrgen0_v1.2                         |\n"
                   "|--------------------------Settings--------------------------|\n"
                   f"|Export Image : {export_image}{" " * (40 - len(cur_message))}|\n"
                   f"|[e]. Exit                                                   |\n"
+                  f"|------------------------------------------------------------|\n"
+                  f"|Status:{status}{" "*(53 - len(status))}|\n"
                   "=======================MADE-BY-BEAN===========================")
         elif in_export_ascii:
-            print("\n\n\n\n\n\n\n")
+            print("\n\n\n\n\n\n\n\n\n\n\n")
             print("==============================================================\n"
-                  "|                        qrgen0_v1.1                         |\n"
+                  "|                        qrgen0_v1.2                         |\n"
                   "|--------------------------Settings--------------------------|\n"
                   f"|Export ASCII : {export_ascii_file}{" " * (40 - len(cur_message))}|\n"
                   f"|[e]. Exit                                                   |\n"
+                  f"|------------------------------------------------------------|\n"
+                  f"|Status:{status}{" "*(53 - len(status))}|\n"
                   "=======================MADE-BY-BEAN===========================")
+        elif in_quiet_zone_adjust:
+            print("\n\n\n\n\n\n\n\n\n\n\n")
+            print("==============================================================\n"
+                  "|                        qrgen0_v1.2                         |\n"
+                  "|--------------------------Settings--------------------------|\n"
+                  f"|Quiet Zone Thickness : {quiet_zone_thickness}{" " * (36 - len(cur_message))}|\n"
+                  f"| It is recommended to keep this above 4 (most optimal: 4)   |\n"
+                  f"|[e]. Exit                                                   |\n"
+                  f"|------------------------------------------------------------|\n"
+                  f"|Status:{status}{" "*(53 - len(status))}|\n"
+                  "=======================MADE-BY-BEAN===========================")
+        elif in_reset_settings:
+            print("\n\n\n\n\n\n\n\n\n\n")
+            print("=====================================================\n"
+                  "|                   qrgen0_v1.2                     |\n"
+                  "|------------------Reset-Settings-------------------|\n"
+                  f"|[-]. Version : {cur_version} -> Auto{" "*(28-len(str(cur_version)))}|\n"
+                  f"|[-]. Encoding Mode: {cur_encoding_mode} -> Auto{" "*(23-len(str(cur_encoding_mode)))}|\n"
+                  f"|[-]. Error Correction Level: {cur_ecl} -> Medium{" "*(12-len(str(cur_ecl)))}|\n"
+                  f"|[-]. Quiet Zone Thickness: {quiet_zone_thickness} -> 4{" "*(19-len(str(quiet_zone_thickness)))}|\n"
+                  f"|[-]. Export QR Image: {export_image} -> True{" "*(21-len(str(export_image)))}|\n"
+                  f"|[-]. Export QR Ascii: {export_ascii_file} -> False{" "*(20-len(str(export_ascii_file)))}|\n"
+                  "==================MADE-BY-BEAN=======================")
+
+        # Reset Status After Each Iteration
+        status = ""
+
+        # Displaying Input Field
         if in_version:
             user_input = input("<Version> ")
         elif in_em:
@@ -1672,24 +1784,32 @@ if cli_enabled:
             user_input = input("<Error Correction Level> ")
         elif in_gen:
             user_input = input("<QR Message> ")
-        elif in_gen_confirm:
+        elif in_gen_confirm or in_gen_from_text_confirm or in_reset_settings:
             user_input = input("<Are You Sure? [y/n]> ")
         elif in_export_image:
             user_input = input("<Export Image [true/false]> ")
         elif in_export_ascii:
             user_input = input("<Export ASCII [true/false]> ")
+        elif in_quiet_zone_adjust:
+            user_input = input("<Quiet Zone Thickness [0 - 20]> ")
+        elif in_gen_from_text:
+            user_input = input("<File Path >")
         else:
             user_input = input("<Option> ")
 
+        # Getting Input
         if main_menu:
             if user_input == "1":
                 main_menu = False
-                in_gen = True
+                in_gen_option = True
             elif user_input == "2":
                 main_menu = False
                 in_setting = True
             elif user_input == "3":
-                print("\n\n\n\n\n\n\n\n")
+                main_menu = False
+                in_reset_settings = True
+            elif user_input.lower() == "e" or user_input == "4":
+                print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
                 quit()
         elif in_setting:
             if user_input == "1":
@@ -1703,44 +1823,53 @@ if cli_enabled:
                 in_ecl = True
             elif user_input == "4":
                 in_setting = False
-                in_export_image = True
+                in_quiet_zone_adjust = True
             elif user_input == "5":
                 in_setting = False
-                in_export_ascii = True
+                in_export_image = True
             elif user_input == "6":
+                in_setting = False
+                in_export_ascii = True
+            elif user_input == "e":
                 main_menu = True
                 in_setting = False
         elif in_version:
             if user_input.lower() == "a":
+                status = f' Version {cur_version} -> Auto'
                 cur_version = "Auto"
                 in_setting = True
                 in_version = False
             elif user_input.isdigit():
                 if 1 <= int(user_input) <= 40:
+                    status = f' Version {cur_version} -> {int(user_input)}'
                     cur_version = int(user_input)
                     in_setting = True
                     in_version = False
                 else:
-                    print("Invalid Version")
+                    status = f' Unavailable Version! {user_input}?'
             elif user_input.lower() == "e":
                 in_setting = True
                 in_version = False
             else:
-                print("Invalid Version")
+                status = f' Invalid Version! {user_input}?'
         elif in_em:
             if user_input.lower() == "a":
+                status = f' Encoding Mode {cur_encoding_mode} -> Auto'
                 cur_encoding_mode = "Auto"
                 in_setting = True
                 in_em = False
             elif user_input.lower() == "1":
+                status = f' Encoding Mode {cur_encoding_mode} -> Numeric'
                 cur_encoding_mode = "Numeric"
                 in_setting = True
                 in_em = False
             elif user_input.lower() == "2":
+                status = f' Encoding Mode {cur_encoding_mode} -> Alphanumeric'
                 cur_encoding_mode = "Alphanumeric"
                 in_setting = True
                 in_em = False
             elif user_input.lower() == "3":
+                status = f' Encoding Mode {cur_encoding_mode} -> Byte'
                 cur_encoding_mode = "Byte"
                 in_setting = True
                 in_em = False
@@ -1748,29 +1877,33 @@ if cli_enabled:
                 in_setting = True
                 in_em = False
             else:
-                print("Invalid Encoding Mode")
+                status = f' Invalid Encoding Mode! {cur_encoding_mode}?'
         elif in_ecl:
             if user_input.lower() == "e":
                 in_ecl = False
                 in_setting = True
             elif user_input == "1":
+                status = f' Error Correction Level {cur_ecl} -> Low'
                 cur_ecl = "Low"
                 in_ecl = False
                 in_setting = True
             elif user_input == "2":
+                status = f' Error Correction Level {cur_ecl} -> Medium'
                 cur_ecl = "Medium"
                 in_ecl = False
                 in_setting = True
             elif user_input == "3":
+                status = f' Error Correction Level {cur_ecl} -> Quartile'
                 cur_ecl = "Quartile"
                 in_ecl = False
                 in_setting = True
             elif user_input == "4":
+                status = f' Error Correction Level {cur_ecl} -> High'
                 cur_ecl = "High"
                 in_ecl = False
                 in_setting = True
             else:
-                print("Invalid Error Correction Level")
+                status = f' Invalid Error Correction Level! {cur_ecl}?'
         elif in_gen:
             if user_input != "":
                 cur_message = user_input
@@ -1781,7 +1914,7 @@ if cli_enabled:
                 cur_message = ""
                 in_gen = False
                 in_gen_confirm = False
-                main_menu = True
+                in_gen_option = True
             else:
                 # Processing Datas To Feed The QR GENERATING Function
                 feeding_version = 1
@@ -1810,18 +1943,18 @@ if cli_enabled:
                 elif cur_ecl == "High":
                     feeding_ecl = "h"
 
-                in_gen_confirm = False
-                main_menu = True
-                generate_QR(cur_message, cli_enabled, feeding_ecl, feeding_encoding_mode, feeding_version, export_image, export_ascii_file)
+                generate_QR(cur_message, cli_enabled, feeding_ecl, feeding_encoding_mode, feeding_version, export_image, export_ascii_file, quiet_zone_thickness)
                 print("Success!!")
                 input("Enter To Quit> ")
                 quit()
         elif in_export_image:
             if user_input.lower() == "true" or user_input.lower() == "t" or user_input == "1":
+                status = f' Export Image {export_image} -> True'
                 export_image = True
                 in_export_image = False
                 in_setting = True
             elif user_input.lower() == "false" or user_input.lower() == "f" or user_input == "0":
+                status = f' Export Image {export_image} -> False'
                 export_image = False
                 in_export_image = False
                 in_setting = True
@@ -1829,13 +1962,15 @@ if cli_enabled:
                 in_export_image = False
                 in_setting = True
             else:
-                print("Invalid Mode")
+                status = f' Invalid Input! {user_input}?'
         elif in_export_ascii:
             if user_input.lower() == "true" or user_input.lower() == "t" or user_input == "1":
+                status = f' Export ASCII {export_ascii_file} -> True'
                 export_ascii_file = True
                 in_export_ascii = False
                 in_setting = True
             elif user_input.lower() == "false" or user_input.lower() == "f" or user_input == "0":
+                status = f' Export ASCII {export_ascii_file} -> False'
                 export_ascii_file = False
                 in_export_ascii = False
                 in_setting = True
@@ -1843,6 +1978,92 @@ if cli_enabled:
                 in_export_ascii = False
                 in_setting = True
             else:
-                print("Invalid Mode")
+                status = f' Invalid Input! {user_input}?'
+        elif in_quiet_zone_adjust:
+            if user_input.isdigit():
+                if 0 <= int(user_input) <= 20:
+                    status = f' Quiet Zone Thickness {quiet_zone_thickness} -> {int(user_input)}'
+                    quiet_zone_thickness = int(user_input)
+                    in_quiet_zone_adjust = False
+                    in_setting = True
+                else:
+                    status = f' Unavailable Thickness! {user_input}?'
+            elif user_input == "e":
+                in_quiet_zone_adjust = False
+                in_setting = True
+            else:
+                status = f" Invalid Input! {user_input}?"
+        elif in_reset_settings:
+            if user_input.lower() == "yes" or user_input.lower() == "y":
+
+                cur_version = "Auto"
+                cur_encoding_mode = "Auto"
+                cur_ecl = "Medium"
+                export_ascii_file = "False"
+                export_image = "True"
+                quiet_zone_thickness = 4
+
+                in_reset_settings = False
+                main_menu = True
+            else:
+                in_reset_settings = False
+                main_menu = True
+        elif in_gen_option:
+            if user_input == "1":
+                in_gen = True
+                in_gen_option = False
+            elif user_input == "2":
+                in_gen_from_text = True
+                in_gen_option = False
+            elif user_input == "e":
+                main_menu = True
+                in_gen_option = False
+            else:
+                status = f' Invalid Input! {user_input}?'
+        elif in_gen_from_text:
+            cur_file_path = user_input.replace('"', "").replace("'", "")
+            in_gen_from_text = False
+            in_gen_from_text_confirm = True
+        elif in_gen_from_text_confirm:
+            data = ""
+            try:
+                with open(cur_file_path, "r") as f:
+                    for line in f:
+                        data += line
+                feeding_version = 1
+                if cur_version == "Auto":
+                    feeding_version = "a"
+                else:
+                    feeding_version = int(cur_version)
+
+                feeding_encoding_mode = 3
+                if cur_encoding_mode == "Auto":
+                    feeding_encoding_mode = "a"
+                elif cur_encoding_mode == "Numeric":
+                    feeding_encoding_mode = "1"
+                elif cur_encoding_mode == "Alphanumeric":
+                    feeding_encoding_mode = "2"
+                elif cur_encoding_mode == "Byte":
+                    feeding_encoding_mode = "3"
+
+                feeding_ecl = "l"
+                if cur_ecl == "Low":
+                    feeding_ecl = "l"
+                elif cur_ecl == "Medium":
+                    feeding_ecl = "m"
+                elif cur_ecl == "Quartile":
+                    feeding_ecl = "q"
+                elif cur_ecl == "High":
+                    feeding_ecl = "h"
+
+                generate_QR(data, cli_enabled, feeding_ecl, feeding_encoding_mode, feeding_version, export_image,
+                            export_ascii_file, quiet_zone_thickness)
+                print("Success!!")
+                input("Enter To Quit> ")
+                quit()
+            except FileNotFoundError:
+                in_gen_from_text_confirm = False
+                in_gen_option = True
+                status = "File Not Found!"
 else:
     generate_QR()
